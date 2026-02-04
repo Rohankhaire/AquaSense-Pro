@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+app.db
+history.json
+users.json
+ganga.csv
+.env
+.idea/
+.vscode/
+node_modules/
+*.pdf
+!Water_pond_tanks_2023.pdf

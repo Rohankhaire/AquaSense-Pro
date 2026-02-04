@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PureCast | AI Water Monitoring</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body class="min-h-screen p-4 md:p-8 selection:bg-teal-500 selection:text-white">
+
+  <div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- HEADER -->
+    <header
+      class="glass-header rounded-2xl p-6 shadow-2xl flex flex-col md:flex-row justify-between items-center animate-enter">
+      <div class="flex items-center space-x-4">
+        <div class="p-3 bg-teal-500/10 rounded-full border border-teal-500/20">
+          <!-- Main Droplet Icon -->
+          <svg class="w-8 h-8 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.040.547-2.384a2 2 0 00-1.216-2.427l-2.097-.830-1.834 2.196a2 2 0 00-.547 1.022l-.040 2.384 2.384-.547a2 2 0 002.427 1.216l.830 2.097 2.196 1.834a2 2 0 001.022.547l2.384.040-.547 2.384a2 2 0 001.216 2.427l2.097.830 1.834-2.196a2 2 0 00.547-1.022l.040-2.384-2.384.547a2 2 0 00-2.427-1.216l-.830-2.097-2.196-1.834zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z">
+            </path>
+            <path d="M12 7v5l3 3"></path> <!-- Just a stylistic abstract path actually -->
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z">
+            </path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight">PureCast</h1>
+          <p class="text-sm text-gray-400 font-medium">Water Quality Intelligence Platform</p>
+        </div>
+      </div>
+      <div class="mt-4 md:mt-0 flex space-x-3">
+        <a href="/analytics"
+          class="px-4 py-2 text-gray-300 hover:text-white text-sm font-medium transition flex items-center hover:bg-white/5 rounded-lg border border-transparent hover:border-white/10">
+          <svg class="w-4 h-4 mr-2 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+          </svg>
+          Trends
+        </a>
+        <a href="/about"
+          class="px-4 py-2 text-gray-300 hover:text-white text-sm font-medium transition flex items-center hover:bg-white/5 rounded-lg border border-transparent hover:border-white/10">
+          <svg class="w-4 h-4 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          Methodology
+        </a>
+        <button id="downloadReportBtn"
+          class="hidden px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg text-sm font-medium transition flex items-center text-slate-700 shadow-sm">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+            </path>
+          </svg>
+          PDF Report
+        </button>
+      </div>
+    </header>
+
+    <main class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- LEFT COLUMN: Inputs & Map -->
+      <section class="lg:col-span-8 space-y-6 animate-enter" style="animation-delay: 0.1s;">
+
+        <!-- Live Satellite Map Control -->
+        <div class="glass-card p-6 relative overflow-hidden group">
+          <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition">
+            <!-- Abstract Globe Icon -->
+            <svg class="w-32 h-32 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+              </path>
+            </svg>
+          </div>
+
+          <div class="flex justify-between items-end mb-4 relative z-10">
+            <div>
+              <h2 class="text-xl font-bold text-white mb-1 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z">
+                  </path>
+                </svg>
+                Remote Sensing
+              </h2>
+              <p class="text-xs text-gray-400 uppercase tracking-widest font-semibold ml-7">Target: Ganga River (10-Day
+                Avg)</p>
+            </div>
+            <button id="fetchLiveButton"
+              class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-6 rounded-lg shadow-lg shadow-blue-500/30 transition transform hover:scale-105 flex items-center border border-blue-400/30">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                </path>
+              </svg>
+              Sync Satellite
+            </button>
+          </div>
+
+          <!-- Map Container -->
+          <div id="map" class="h-64 w-full rounded-xl border border-slate-600/50 shadow-inner z-0"></div>
+        </div>
+
+        <!-- Sensor Form -->
+        <div class="glass-card p-6">
+          <div class="flex justify-between items-center mb-6 border-b border-light pb-2">
+            <h2 class="text-lg font-bold text-slate-900 flex items-center">
+              <svg class="w-5 h-5 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z">
+                </path>
+              </svg>
+              Live Data Readings
+            </h2>
+            <a href="/simulator"
+              class="text-sm bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-lg transition font-bold flex items-center shadow-lg transform hover:-translate-y-0.5 border border-teal-500">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+                </path>
+              </svg>
+              Manual Calibration
+            </a>
+          </div>
+
+          <div id="live-readings-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- Injected via JS -->
+            <div class="col-span-4 text-center text-slate-400 py-10">
+              <span class="">Click 'Sync Satellite' to pull latest data</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT COLUMN: Results & Insights -->
+      <section class="lg:col-span-4 space-y-6 animate-enter" style="animation-delay: 0.2s;">
+
+        <!-- Score Card -->
+        <div class="glass-card p-8 text-center relative overflow-hidden">
+          <div id="score-ring"
+            class="absolute inset-0 border-4 border-transparent rounded-2xl pointer-events-none transition-colors duration-500">
+          </div>
+
+          <h3 class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2">Water Quality Index (WQI)</h3>
+
+          <div class="relative inline-block my-4">
+            <span id="wqi-score" class="text-6xl font-black text-slate-900 relative z-10">--</span>
+            <div id="pulse-effect"
+              class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-teal-500/10 rounded-full blur-xl opacity-0 transition">
+            </div>
+          </div>
+
+          <div id="quality-badge"
+            class="inline-block px-4 py-1.5 rounded-full bg-slate-100 text-slate-500 text-xs font-bold border border-slate-200 transition-colors duration-300">
+            Awaiting Data
+          </div>
+        </div>
+
+        <!-- Recommendations Panel -->
+        <div id="recommendations-panel" class="hidden glass-card p-5 border-l-4 border-yellow-500 bg-yellow-500/5">
+          <h3 class="text-sm font-bold text-yellow-100 mb-3 flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+              </path>
+            </svg>
+            Corrective Actions
+          </h3>
+          <ul id="recommendations-list" class="space-y-2 text-xs text-gray-300 list-disc list-inside">
+            <!-- Dynamic Content -->
+          </ul>
+        </div>
+
+        <!-- Trend Chart -->
+        <div class="glass-card p-5">
+          <h3 class="text-sm font-bold text-gray-300 mb-4 flex justify-between">
+            <span class="flex items-center"><svg class="w-4 h-4 mr-2 text-emerald-400" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+              </svg> Live Trend</span>
+          </h3>
+          <div class="h-48">
+            <canvas id="predictionChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Logs -->
+        <div class="glass-card p-4 h-48 overflow-hidden flex flex-col">
+          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 flex items-center">
+            <svg class="w-3 h-3 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+              </path>
+            </svg>
+            System Activity
+          </h3>
+          <div id="alert-log" class="flex-1 overflow-y-auto space-y-2 pr-2 text-xs font-mono">
+            <div class="text-slate-700 p-2 bg-slate-100 rounded border border-slate-200">System initialized.</div>
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+
+</html>

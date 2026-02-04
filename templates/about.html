@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PureCast | Our Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body class="min-h-screen p-4 md:p-8 selection:bg-teal-500 selection:text-white">
+
+    <div class="max-w-5xl mx-auto space-y-8">
+
+        <!-- HEADER -->
+        <header class="glass-header rounded-2xl p-6 shadow-2xl flex justify-between items-center animate-enter">
+            <div class="flex items-center space-x-4">
+                <a href="/"
+                    class="p-3 bg-teal-500/10 rounded-full hover:bg-teal-500/20 transition border border-teal-500/20">
+                    <svg class="w-6 h-6 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                </a>
+                <a href="/analytics"
+                    class="p-3 bg-purple-500/10 rounded-full hover:bg-purple-500/20 transition border border-purple-500/20"
+                    title="View Analytics">
+                    <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                    </svg>
+                </a>
+                <div>
+                    <h1
+                        class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500 tracking-tight">
+                        PureCast Intelligence</h1>
+                    <p class="text-sm text-gray-400 font-light">How PureCast Predicts Water Quality</p>
+                </div>
+            </div>
+        </header>
+
+        <main class="grid grid-cols-1 md:grid-cols-2 gap-8 animate-enter" style="animation-delay: 0.1s;">
+
+            <!-- Section 1: The Model -->
+            <section class="glass-card p-8 md:col-span-2">
+                <h2 class="text-xl font-bold text-slate-900 mb-4 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.040.547-2.384a2 2 0 00-1.216-2.427l-2.097-.830-1.834 2.196a2 2 0 00-.547 1.022l-.040 2.384 2.384-.547a2 2 0 002.427 1.216l.830 2.097 2.196 1.834a2 2 0 001.022.547l2.384.040-.547 2.384a2 2 0 001.216 2.427l2.097.830 1.834-2.196a2 2 0 00.547-1.022l.040-2.384-2.384.547a2 2 0 00-2.427-1.216l-.830-2.097-2.196-1.834zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z">
+                        </path>
+                    </svg>
+                    The Hybrid AI Engine
+                </h2>
+                <p class="text-slate-600 leading-relaxed mb-6">
+                    PureCast does not rely on simple if-then rules. It creates a robust prediction using a
+                    <span class="text-teal-600 font-bold">Hybrid Stacking Ensemble Model</span>.
+                    By combining two powerful algorithms, we minimize error and maximize reliability across diverse
+                    water conditions.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <h3 class="font-bold text-emerald-600 mb-2">1. Random Forest Regressor</h3>
+                        <p class="text-xs text-slate-500">Builds 250+ decision trees to analyze non-linear relationships
+                            between chemical parameters like pH and Dissolved Oxygen.</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <h3 class="font-bold text-blue-600 mb-2">2. XGBoost (Extreme Gradient Boosting)</h3>
+                        <p class="text-xs text-slate-500">Uses gradient descent optimization to refine predictions and
+                            handle outliers in sensor data effectively.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 2: Input Parameters -->
+            <section class="glass-card p-8">
+                <h2 class="text-xl font-bold text-slate-900 mb-4 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.040.547-2.384a2 2 0 00-1.216-2.427l-2.097-.830-1.834 2.196a2 2 0 00-.547 1.022l-.040 2.384 2.384-.547a2 2 0 002.427 1.216l.830 2.097 2.196 1.834a2 2 0 001.022.547l2.384.040-.547 2.384a2 2 0 001.216 2.427l2.097.830 1.834-2.196a2 2 0 00.547-1.022l.040-2.384-2.384.547a2 2 0 00-2.427-1.216l-.830-2.097-2.196-1.834zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z">
+                        </path>
+                    </svg>
+                    8-Point Analysis Vector
+                </h2>
+                <p class="text-sm text-slate-500 mb-4">Our model analyzes these critical chemical markers
+                    simultaneously:
+                </p>
+                <ul class="space-y-3">
+                    <li class="flex items-center space-x-3 text-sm text-slate-700">
+                        <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+                        <span><b>pH & Conductivity</b> (Ionic Balance)</span>
+                    </li>
+                    <li class="flex items-center space-x-3 text-sm text-slate-700">
+                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                        <span><b>Turbidity & TDS</b> (Physical Suspensions)</span>
+                    </li>
+                    <li class="flex items-center space-x-3 text-sm text-slate-700">
+                        <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                        <span><b>Chlorine & Nitrate</b> (Chemical Pollutants)</span>
+                    </li>
+                    <li class="flex items-center space-x-3 text-sm text-slate-700">
+                        <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+                        <span><b>Dissolved Oxygen</b> (Biological Health)</span>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- Section 3: Satellite Tech -->
+            <section class="glass-card p-8">
+                <h2 class="text-xl font-bold text-slate-900 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                        </path>
+                    </svg>
+                    Satellite Remote Sensing
+                </h2>
+                <p class="text-sm text-slate-500 mb-4">
+                    When local sensors aren't available, we query the <b>Sentinel-2 Satellite</b> constellation via
+                    Google Earth Engine.
+                </p>
+                <div class="space-y-4">
+                    <div
+                        class="flex justify-between items-center text-xs text-slate-400 border-b border-slate-200 pb-2">
+                        <span>Spectral Band</span>
+                        <span>Inferred Metric</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm font-mono text-teal-700">
+                        <span>B3 (Green) - B8 (NIR)</span>
+                        <span>NDWI (Turbidity)</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm font-mono text-teal-700">
+                        <span>B8 (NIR) - B4 (Red)</span>
+                        <span>NDVI (Algae/DO)</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer CTA -->
+            <section class="md:col-span-2 text-center mt-8">
+                <a href="/"
+                    class="inline-block bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-400 hover:to-blue-500 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105">
+                    Return to Dashboard
+                </a>
+            </section>
+
+        </main>
+    </div>
+</body>
+
+</html>
