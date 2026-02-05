@@ -100,6 +100,10 @@
               </h2>
               <p class="text-xs text-gray-400 uppercase tracking-widest font-semibold ml-7">Target: Ganga River (10-Day
                 Avg)</p>
+              <div id="data-source-badge"
+                class="ml-7 mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 hidden">
+                <!-- Status Text injected by JS -->
+              </div>
             </div>
             <button id="fetchLiveButton"
               class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-6 rounded-lg shadow-lg shadow-blue-500/30 transition transform hover:scale-105 flex items-center border border-blue-400/30">
@@ -169,11 +173,15 @@
             class="inline-block px-4 py-1.5 rounded-full bg-slate-100 text-slate-500 text-xs font-bold border border-slate-200 transition-colors duration-300">
             Awaiting Data
           </div>
+
+          <p id="usage-note" class="mt-4 text-xs font-medium text-slate-500 max-w-[200px] mx-auto min-h-[1.5em]">
+            <!-- Usage Note Injected Here -->
+          </p>
         </div>
 
         <!-- Recommendations Panel -->
-        <div id="recommendations-panel" class="hidden glass-card p-5 border-l-4 border-yellow-500 bg-yellow-500/5">
-          <h3 class="text-sm font-bold text-yellow-100 mb-3 flex items-center">
+        <div id="recommendations-panel" class="hidden glass-card p-5 border-l-4 border-yellow-500 bg-yellow-50">
+          <h3 class="text-sm font-bold text-yellow-800 mb-3 flex items-center">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
@@ -181,7 +189,7 @@
             </svg>
             Corrective Actions
           </h3>
-          <ul id="recommendations-list" class="space-y-2 text-xs text-gray-300 list-disc list-inside">
+          <ul id="recommendations-list" class="space-y-2 text-xs text-slate-700 list-disc list-inside">
             <!-- Dynamic Content -->
           </ul>
         </div>

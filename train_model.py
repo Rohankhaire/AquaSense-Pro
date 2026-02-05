@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score, mean_absolute_error
+from sklearn.metrics import r2_score, mean_absolute_error, classification_report, confusion_matrix
 from sklearn.ensemble import RandomForestRegressor, StackingRegressor
 from sklearn.linear_model import LinearRegression
 from xgboost import XGBRegressor
@@ -54,28 +54,50 @@ def calculate_wqi_row(row):
     score = 0.0
     for param, rule in PARAM_RULES.items():
         val = row.get(param, None)
+        if val is None:
+            continue
         sidx = subindex_for_param(val, rule)
         score += sidx * rule['weight']
     return int(round(max(0, min(100, score))))
 
 
 # --------------------------
-# Synthetic Dataset Generator
+# Load Dataset
 # --------------------------
-def generate_synthetic(n=3500, random_state=42):
-    rng = np.random.RandomState(random_state)
-    data = pd.DataFrame({
-        'ph': rng.normal(loc=7.2, scale=0.8, size=n).clip(4.5, 9.5),
-        'turbidity': rng.exponential(scale=6.0, size=n).clip(0.0, 200.0),
-        'tds': rng.normal(loc=450, scale=300, size=n).clip(20, 3000),
-        'do': rng.normal(loc=6.5, scale=2.5, size=n).clip(0.5, 14.0),
-        'temp': rng.normal(loc=24.0, scale=6.0, size=n).clip(4.0, 40.0),
-        'conductivity': rng.normal(loc=800, scale=400, size=n).clip(50, 5000),
-        'chlorine': rng.normal(loc=0.8, scale=0.7, size=n).clip(0.0, 5.0),
-        'nitrate': rng.exponential(scale=6.0, size=n).clip(0.0, 200.0)
-    })
-    data['wqi'] = data.apply(calculate_wqi_row, axis=1)
-    return data
+def load_dataset(filepath='water_quality_data_50000.csv'):
+    print(f"📂 Loading dataset from {filepath}...")
+    try:
+        df = pd.read_csv(filepath)
+    except FileNotFoundError:
+        print(f"❌ Error: File {filepath} not found.")
+        return None
+
+    # Map columns to match PARAM_RULES keys
+    # CSV Columns: pH,Turbidity,TDS,DO,Temperature,EC,Chlorine,Nitrate,Quality
+    column_mapping = {
+        'pH': 'ph',
+        'Turbidity': 'turbidity',
+        'TDS': 'tds',
+        'DO': 'do',
+        'Temperature': 'temp',
+        'EC': 'conductivity',
+        'Chlorine': 'chlorine',
+        'Nitrate': 'nitrate'
+    }
+    
+    df.rename(columns=column_mapping, inplace=True)
+    
+    # Check if all required columns exist
+    required_cols = list(PARAM_RULES.keys())
+    missing_cols = [c for c in required_cols if c not in df.columns]
+    if missing_cols:
+        print(f"⚠️ Warning: Missing columns: {missing_cols}")
+    
+    # Calculate WQI for the dataset
+    print("🔄 Calculating WQI for all rows...")
+    df['wqi'] = df.apply(calculate_wqi_row, axis=1)
+    
+    return df
 
 
 # --------------------------
@@ -115,22 +137,44 @@ def build_hybrid_model():
 # Train & Evaluate
 # --------------------------
 def train_and_save():
-    df = generate_synthetic(4000)
-    X = df.drop('wqi', axis=1)
+    df = load_dataset()
+    if df is None:
+        return
+
+    # Analyze WQI vs Quality Label
+    if 'Quality' in df.columns:
+        print("\n📊 Analysis: WQI vs 'Quality' Label")
+        print(df.groupby('Quality')['wqi'].describe())
+        
+        # Simple threshold check
+        # Assuming WQI > 50 is generally considered acceptable/fair, but let's see what the data says
+        # Usually WQI < 25 is poor, 25-50 marginal, 50-70 fair, 70-90 good, 90-100 excellent
+        # Depending on the formula, sometimes higher is better, sometimes lower. 
+        # In this code: 100 is ideal (deviation = 0). So Higher WQI = Better water.
+        
+        # Safe vs Unsafe distribution
+        safe_wqis = df[df['Quality'] == 'Safe']['wqi']
+        unsafe_wqis = df[df['Quality'] == 'Unsafe']['wqi']
+        print(f"\nAverage WQI for Safe: {safe_wqis.mean():.2f}")
+        print(f"Average WQI for Unsafe: {unsafe_wqis.mean():.2f}")
+
+    # Prepare features and target
+    X = df[list(PARAM_RULES.keys())]
     y = df['wqi']
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
 
     model = build_hybrid_model()
-    print("🚀 Training Hybrid Random Forest + XGBoost Model...")
+    print("\n🚀 Training Hybrid Random Forest + XGBoost Model...")
     model.fit(X_train, y_train)
 
     y_pred = model.predict(X_test)
     r2 = r2_score(y_test, y_pred)
     mae = mean_absolute_error(y_test, y_pred)
 
-    print(f"✅ R² Score: {r2:.4f}")
-    print(f"✅ MAE: {mae:.3f}")
+    print(f"\n✅ Model Performance:")
+    print(f"   R² Score: {r2:.4f}")
+    print(f"   MAE: {mae:.3f}")
     print("💾 Saving model to model/model.joblib")
     joblib.dump(model, 'model/model.joblib')
 

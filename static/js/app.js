@@ -126,6 +126,11 @@ function initMap() {
   L.marker([lat, lng]).addTo(map)
     .bindPopup('<b>Monitoring Station A1</b><br>Ganga River, Varanasi')
     .openPopup();
+
+  // Highlight Scanned Area (ROI)
+  const bounds = [[25.2, 82.9], [25.4, 83.1]];
+  L.rectangle(bounds, { color: "#ff7800", weight: 1, fillOpacity: 0.2 }).addTo(map)
+    .bindPopup("Satellite Scan Area (Sentinel-2 ROI)");
 }
 
 // --- UI Generation & Sync ---
@@ -292,6 +297,15 @@ function updateAssessmentUI(wqi, text) {
   badge.className = `inline-block px-6 py-2 rounded-full text-base font-bold backdrop-blur-md border transition-all duration-300 shadow-sm ${colorClass}`;
   badge.textContent = text;
 
+  // Usage Recommendation Note (New Feature)
+  const noteEl = document.getElementById('usage-note');
+  if (noteEl) {
+    if (wqi >= 90) noteEl.innerText = "ℹ️ Suitable for Drinking (after filtration) & Bathing.";
+    else if (wqi >= 70) noteEl.innerText = "ℹ️ Safe for Bathing & Agriculture. Filtration needed for drinking.";
+    else if (wqi >= 50) noteEl.innerText = "⚠️ Treatment required before any use. Good for Irrigation.";
+    else noteEl.innerText = "⛔ Unsafe for any direct contact or consumption.";
+  }
+
   ring.className = `absolute inset-0 border-4 rounded-2xl pointer-events-none transition-colors duration-1000 ${ringColor} status-ring`;
 }
 
@@ -378,6 +392,8 @@ function updateChart(newVal) {
 }
 
 // --- Live Data Fetching ---
+
+// --- Live Data Fetching ---
 async function fetchLiveData() {
   showAlert('Contacting Sentinel-2 Satellite API...', 'info');
   const fetchBtn = document.getElementById('fetchLiveButton');
@@ -385,7 +401,15 @@ async function fetchLiveData() {
 
   try {
     const resp = await fetch('/api/get-live-data');
-    const data = await resp.json();
+    const responseData = await resp.json();
+
+    // Check if we got the new structure { features, prediction, metadata } or fallback
+    const data = responseData.features || responseData;
+    const prediction = responseData.prediction;
+    const metadata = responseData.metadata || { source: 'unknown', timestamp: new Date().toLocaleString() };
+
+    // Update Status Badge
+    updateSourceBadge(metadata);
 
     const isSimulator = document.getElementById('metrics-grid') !== null;
 
@@ -394,25 +418,36 @@ async function fetchLiveData() {
         if (data[p.id] !== undefined) {
           const el = document.getElementById(p.id);
           const slide = document.getElementById(`${p.id}-slide`);
-          el.value = data[p.id];
-          slide.value = data[p.id];
-          validateRangeColor(el, p);
+          if (el && slide) {
+            el.value = data[p.id];
+            slide.value = data[p.id];
+            validateRangeColor(el, p);
+          }
         }
       });
-      showAlert('Satellite Data Synced Successfully.', 'success');
-      await predictQuality();
+      showAlert('Satellite Data Synced & Recorded.', 'success');
+
+      if (prediction) {
+        animateValue(wqiScoreDisplay, parseInt(wqiScoreDisplay.textContent) || 0, prediction.wqi, 1500);
+        updateAssessmentUI(prediction.wqi, prediction.assessment);
+        updateChart(prediction.wqi);
+        generateRecommendations(data, prediction.wqi);
+        if (downloadReportBtn) downloadReportBtn.classList.remove('hidden');
+        showAlert(`Analysis Complete. WQI: ${prediction.wqi}`, 'success');
+      } else {
+        await predictQuality();
+      }
+
     } else {
       // Home Page Logic
       const grid = document.getElementById('live-readings-grid');
-      if (grid) grid.innerHTML = ''; // Clear loading
+      if (grid) grid.innerHTML = '';
 
-      const mockInputs = {};
+      // Populate Grid
       parameters.forEach(p => {
         const val = data[p.id] || ((p.min + p.max) / 2);
-        mockInputs[p.id] = val;
 
         if (grid) {
-          // Create Card
           grid.innerHTML += `
                <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center shadow-sm hover:shadow-md transition">
                   <div class="text-xs text-slate-500 uppercase font-bold mb-1 tracking-wider">${p.label}</div>
@@ -422,35 +457,70 @@ async function fetchLiveData() {
         }
       });
 
-      const predResp = await fetch('/api/predict', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mockInputs)
-      });
-      const predData = await predResp.json();
+      if (prediction) {
+        animateValue(wqiScoreDisplay, parseInt(wqiScoreDisplay.textContent) || 0, prediction.wqi, 1500);
+        updateAssessmentUI(prediction.wqi, prediction.assessment);
+        updateChart(prediction.wqi);
+        showAlert('Live Satellite Data Updated & Stored.', 'success');
 
-      animateValue(wqiScoreDisplay, parseInt(wqiScoreDisplay.textContent) || 0, predData.wqi, 1500);
-      updateAssessmentUI(predData.wqi, predData.assessment);
-      updateChart(predData.wqi);
-      showAlert('Live Satellite Data Updated.', 'success');
+        if (downloadReportBtn) {
+          downloadReportBtn.classList.remove('hidden');
+        }
+      } else {
+        const mockInputs = {};
+        parameters.forEach(p => mockInputs[p.id] = data[p.id]);
 
-      // Show report button after sync
-      if (downloadReportBtn) {
-        downloadReportBtn.classList.remove('hidden');
+        const predResp = await fetch('/api/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(mockInputs)
+        });
+        const predData = await predResp.json();
+
+        animateValue(wqiScoreDisplay, parseInt(wqiScoreDisplay.textContent) || 0, predData.wqi, 1500);
+        updateAssessmentUI(predData.wqi, predData.assessment);
+        updateChart(predData.wqi);
+        showAlert('Live Satellite Data Updated.', 'success');
       }
     }
 
     // Store globally for PDF report
     window.lastFetchedData = data;
+    window.lastMetadata = metadata;
 
   } catch (e) {
     showAlert('Data Sync Failed: ' + e.message, 'error');
+    console.error(e);
   } finally {
     if (fetchBtn) fetchBtn.classList.remove('opacity-50', 'cursor-not-allowed');
   }
 }
 
-// --- Utilities ---
+// --- Status Badge Helper ---
+function updateSourceBadge(metadata) {
+  const badge = document.getElementById('data-source-badge');
+  if (!badge) return;
+
+  badge.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-800', 'bg-amber-100', 'text-amber-800', 'bg-blue-100', 'text-blue-800');
+
+  let text = "";
+  let classes = "";
+
+  if (metadata.source === 'live') {
+    text = `🟢 Live Satellite Data (${metadata.timestamp})`;
+    classes = "bg-emerald-100 text-emerald-800";
+  } else if (metadata.source === 'cached') {
+    text = `🟠 Last Available Data (${metadata.timestamp})`;
+    classes = "bg-amber-100 text-amber-800";
+  } else {
+    text = `🔵 Realistic Simulation`;
+    classes = "bg-blue-100 text-blue-800";
+  }
+
+  badge.className = `ml-7 mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${classes}`;
+  badge.textContent = text;
+}
+
 // --- Utilities ---
 function showAlert(msg, type) {
   const div = document.createElement('div');
@@ -458,12 +528,9 @@ function showAlert(msg, type) {
   div.className = `${color} text-xs py-1 border-b border-slate-200 font-mono`;
   // Simple arrow prompt instead of emoji
   div.innerText = `> ${msg}`;
-  alertLog.prepend(div);
+  if (alertLog) alertLog.prepend(div);
 }
 
-// Update loading text without emoji
-// ... inside predictQuality ...
-// predictButton.innerHTML = `<span class="animate-spin mr-2 inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> Analyzing...`;
 
 // --- PDF Report ---
 function generatePDFReport() {
@@ -480,25 +547,38 @@ function generatePDFReport() {
   doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 30);
   doc.text(`Location: Ganga River Monitoring Station (Varanasi)`, 20, 36);
 
+  // Source Info
+  if (window.lastMetadata) {
+    let sourceText = "Unknown";
+    if (window.lastMetadata.source === 'live') sourceText = "Live Satellite (Sentinel-2)";
+    else if (window.lastMetadata.source === 'cached') sourceText = "Cached / Last Known";
+    else sourceText = "Simulation (No Satellite Data)";
+
+    doc.text(`Data Source: ${sourceText}`, 20, 42);
+    if (window.lastMetadata.timestamp) {
+      doc.text(`Data Timestamp: ${window.lastMetadata.timestamp}`, 20, 48);
+    }
+  }
+
   doc.setLineWidth(0.5);
-  doc.line(20, 40, 190, 40);
+  doc.line(20, 52, 190, 52);
 
   // Results
   doc.setFontSize(16);
   doc.setTextColor(0);
-  doc.text("Analysis Results", 20, 50);
+  doc.text("Analysis Results", 20, 65);
 
   const wqi = wqiScoreDisplay.innerText;
   const assessment = qualityBadge.innerText;
 
   doc.setFontSize(14);
-  doc.text(`Overall WQI Score: ${wqi}/100`, 20, 60);
-  doc.text(`Assessment: ${assessment}`, 20, 68);
+  doc.text(`Overall WQI Score: ${wqi}/100`, 20, 75);
+  doc.text(`Assessment: ${assessment}`, 20, 83);
 
   // Parameters Table
-  let y = 85;
+  let y = 100;
   doc.setFontSize(12);
-  doc.text("Parameter Readings:", 20, 80);
+  doc.text("Parameter Readings:", 20, 95);
 
   parameters.forEach(p => {
     let val = "N/A";
@@ -514,7 +594,7 @@ function generatePDFReport() {
   });
 
   // Recommendations
-  if (!recommendationsPanel.classList.contains('hidden')) {
+  if (recommendationsPanel && !recommendationsPanel.classList.contains('hidden')) {
     y += 10;
     doc.setFontSize(14);
     doc.setTextColor(200, 0, 0);
@@ -523,12 +603,15 @@ function generatePDFReport() {
     doc.setFontSize(10);
     doc.setTextColor(0);
 
-    const recs = recommendationsList.getElementsByTagName('li');
-    for (let li of recs) {
-      doc.text(`• ${li.innerText}`, 25, y);
-      y += 6;
+    if (recommendationsList) {
+      const recs = recommendationsList.getElementsByTagName('li');
+      for (let li of recs) {
+        doc.text(`• ${li.innerText}`, 25, y);
+        y += 6;
+      }
     }
   }
 
   doc.save("PureCast_Report.pdf");
 }
+
